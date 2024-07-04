@@ -43,6 +43,7 @@ func newHandler(s *service, codec rpc.Codec, logger log.Logger) *handler {
 
 	return h
 }
+
 func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	h.mux.ServeHTTP(w, r)
 }
@@ -131,8 +132,9 @@ func (h *handler) newHandler(methodSpec *method) func(http.ResponseWriter, *http
 			field := methodSpec.argsType.Field(i)
 			name := field.Tag.Get("json")
 			if !values.Has(name) {
-				h.encodeAndWriteResponse(w, nil, fmt.Errorf("missing param '%s'", name), int(json2.E_INVALID_REQ))
-				return
+				nilValue := reflect.Zero(args.Elem().Field(i).Type())
+				args.Elem().Field(i).Set(nilValue)
+				continue
 			}
 			rawVal := values.Get(name)
 			var err error
